@@ -42,21 +42,38 @@ message.Font = Enum.Font.GothamBold
 message.Parent = warning
 
 local function showWarning(disaster)
-    title.Text = "⚠ " .. string.upper(disaster) .. " ⚠"
-    message.Text = "DISASTER INCOMING! FIND SHELTER!"
+    local name = string.lower(disaster)
 
-    warning.BackgroundColor3 = Color3.fromRGB(170, 15, 15)
+    local messages = {
+        tornado = {"TORNADO INCOMING!", Color3.fromRGB(120, 30, 180)},
+        tsunami = {"MASSIVE WAVE APPROACHING!", Color3.fromRGB(0, 100, 220)},
+        meteor = {"METEOR STRIKE DETECTED!", Color3.fromRGB(220, 75, 15)},
+        earthquake = {"GROUND COLLAPSE IMMINENT!", Color3.fromRGB(150, 100, 50)},
+        volcano = {"VOLCANIC ERUPTION!", Color3.fromRGB(220, 45, 10)},
+        flood = {"FLOOD WARNING!", Color3.fromRGB(0, 150, 180)},
+        lightning = {"SEVERE LIGHTNING STORM!", Color3.fromRGB(100, 100, 220)},
+        hurricane = {"HURRICANE APPROACHING!", Color3.fromRGB(40, 70, 150)}
+    }
+
+    local selected = messages[name] or {
+        "EXTREME DISASTER DETECTED!",
+        Color3.fromRGB(190, 20, 20)
+    }
+
+    title.Text = "⚠ " .. string.upper(disaster) .. " ⚠"
+    message.Text = selected[1]
+    warning.BackgroundColor3 = selected[2]
 
     TweenService:Create(warning, TweenInfo.new(0.5), {
         Position = UDim2.fromScale(0, 0)
     }):Play()
 
-    for i = 1, 5 do
-        warning.BackgroundColor3 = Color3.fromRGB(220, 20, 20)
-        task.wait(0.3)
-        warning.BackgroundColor3 = Color3.fromRGB(100, 5, 5)
-        task.wait(0.3)
-    end
+    task.wait(4)
+
+    TweenService:Create(warning, TweenInfo.new(0.5), {
+        Position = UDim2.fromScale(0, -0.22)
+    }):Play()
+end
 
     task.wait(2)
 
