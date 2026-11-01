@@ -1,316 +1,361 @@
--- CATACLYSM ULTIMATE CLIENT HUD
--- Install in StarterPlayer > StarterPlayerScripts
+-- CATACLYSM: COMPLETE CLIENT
+-- Place as a LocalScript in StarterPlayerScripts
 
 local Players = game:GetService("Players")
-local RS = game:GetService("ReplicatedStorage")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local TweenService = game:GetService("TweenService")
+local SoundService = game:GetService("SoundService")
+local Lighting = game:GetService("Lighting")
 
 local player = Players.LocalPlayer
-local event = RS:WaitForChild("CataclysmEvent")
-local shop = RS:WaitForChild("CataclysmShop")
+local event = ReplicatedStorage:WaitForChild("CataclysmEvent")
+local shop = ReplicatedStorage:WaitForChild("CataclysmShop")
 
 local gui = Instance.new("ScreenGui")
-gui.Name = "CataclysmHUD"
+gui.Name = "CataclysmInterface"
+gui.IgnoreGuiInset = true
 gui.ResetOnSpawn = false
 gui.Parent = player:WaitForChild("PlayerGui")
 
-local function create(class, props, parent)
-    local obj = Instance.new(class)
+local function create(class, properties, parent)
+    local object = Instance.new(class)
 
-    for key, value in pairs(props) do
-        obj[key] = value
+    for key, value in pairs(properties) do
+        object[key] = value
     end
 
-    obj.Parent = parent
-    return obj
+    object.Parent = parent
+    return object
 end
 
-local function style(obj)
+local function label(text, size, position, parent, font)
+    return create("TextLabel", {
+        Size = size,
+        Position = position,
+        BackgroundTransparency = 1,
+        Text = text,
+        TextColor3 = Color3.new(1, 1, 1),
+        TextScaled = true,
+        Font = font or Enum.Font.GothamBold
+    }, parent)
+end
+
+local function button(text, size, position, parent)
+    local b = create("TextButton", {
+        Size = size,
+        Position = position,
+        BackgroundColor3 = Color3.fromRGB(170, 40, 30),
+        Text = text,
+        TextColor3 = Color3.new(1, 1, 1),
+        TextScaled = true,
+        Font = Enum.Font.GothamBold,
+        AutoButtonColor = true
+    }, parent)
+
     create("UICorner", {
         CornerRadius = UDim.new(0, 12)
-    }, obj)
+    }, b)
 
-    create("UIStroke", {
-        Color = Color3.fromRGB(0, 190, 255),
-        Thickness = 2
-    }, obj)
+    return b
 end
 
+-- AUDIO
+local siren = create("Sound", {
+    Name = "EmergencySiren",
+    SoundId = "rbxassetid://9120386436",
+    Volume = 0.5,
+    Looped = true
+}, SoundService)
+
+-- BACKGROUND
+local background = create("Frame", {
+    Size = UDim2.fromScale(1, 1),
+    BackgroundColor3 = Color3.fromRGB(8, 12, 22)
+}, gui)
+
+local gradient = create("UIGradient", {
+    Color = ColorSequence.new(
+        Color3.fromRGB(35, 45, 65),
+        Color3.fromRGB(5, 5, 12)
+    ),
+    Rotation = 45
+}, background)
+
+-- INTRO
+local intro = create("Frame", {
+    Size = UDim2.fromScale(1, 1),
+    BackgroundColor3 = Color3.fromRGB(8, 12, 22)
+}, background)
+
+local title = label(
+    "CATACLYSM",
+    UDim2.fromScale(0.9, 0.2),
+    UDim2.fromScale(0.05, 0.2),
+    intro,
+    Enum.Font.GothamBlack
+)
+
+title.TextColor3 = Color3.fromRGB(255, 90, 55)
+
+local subtitle = label(
+    "THE WORLD IS ABOUT TO END.",
+    UDim2.fromScale(0.9, 0.07),
+    UDim2.fromScale(0.05, 0.4),
+    intro
+)
+
+local play = button(
+    "ENTER THE CHAOS",
+    UDim2.fromScale(0.34, 0.09),
+    UDim2.fromScale(0.33, 0.58),
+    intro
+)
+
+local shopButton = button(
+    "SHOP",
+    UDim2.fromScale(0.2, 0.07),
+    UDim2.fromScale(0.4, 0.7),
+    intro
+)
+
+local howButton = button(
+    "HOW TO PLAY",
+    UDim2.fromScale(0.2, 0.06),
+    UDim2.fromScale(0.4, 0.79),
+    intro
+)
+
 -- MAIN HUD
-
-local top = create("Frame", {
-    Size = UDim2.new(0.8, 0, 0, 105),
-    Position = UDim2.new(0.1, 0, 0.025, 0),
-    BackgroundColor3 = Color3.fromRGB(8, 15, 30),
-    BackgroundTransparency = 0.08
-}, gui)
-
-style(top)
-
-local title = create("TextLabel", {
-    Size = UDim2.new(1, -20, 0, 48),
-    Position = UDim2.fromOffset(10, 5),
+local hud = create("Frame", {
+    Size = UDim2.fromScale(1, 1),
     BackgroundTransparency = 1,
-    Text = "CATACLYSM",
-    Font = Enum.Font.GothamBlack,
-    TextColor3 = Color3.fromRGB(0, 220, 255),
-    TextScaled = true
-}, top)
-
-local subtitle = create("TextLabel", {
-    Size = UDim2.new(1, -20, 0, 28),
-    Position = UDim2.fromOffset(10, 55),
-    BackgroundTransparency = 1,
-    Text = "SURVIVE THE IMPOSSIBLE",
-    Font = Enum.Font.GothamBold,
-    TextColor3 = Color3.new(1, 1, 1),
-    TextScaled = true
-}, top)
-
-local timer = create("TextLabel", {
-    Size = UDim2.fromOffset(80, 25),
-    Position = UDim2.new(1, -90, 1, -28),
-    BackgroundTransparency = 1,
-    Text = "",
-    Font = Enum.Font.GothamBlack,
-    TextColor3 = Color3.fromRGB(255, 210, 80),
-    TextScaled = true
-}, top)
-
--- SHOP BUTTON
-
-local shopButton = create("TextButton", {
-    Size = UDim2.fromOffset(145, 48),
-    Position = UDim2.new(1, -160, 1, -65),
-    BackgroundColor3 = Color3.fromRGB(0, 125, 200),
-    Text = "SURVIVAL SHOP",
-    TextColor3 = Color3.new(1, 1, 1),
-    Font = Enum.Font.GothamBold,
-    TextScaled = true
-}, gui)
-
-style(shopButton)
-
--- SHOP WINDOW
-
-local shopFrame = create("Frame", {
-    Size = UDim2.fromOffset(390, 350),
-    Position = UDim2.new(0.5, -195, 0.5, -175),
-    BackgroundColor3 = Color3.fromRGB(8, 15, 30),
     Visible = false
-}, gui)
+}, background)
 
-style(shopFrame)
+local status = label(
+    "WAITING FOR ROUND",
+    UDim2.fromScale(0.7, 0.07),
+    UDim2.fromScale(0.15, 0.04),
+    hud,
+    Enum.Font.GothamBlack
+)
 
-create("TextLabel", {
-    Size = UDim2.new(1, -20, 0, 45),
-    Position = UDim2.fromOffset(10, 5),
-    BackgroundTransparency = 1,
-    Text = "SURVIVAL GEAR",
-    Font = Enum.Font.GothamBlack,
-    TextColor3 = Color3.fromRGB(0, 220, 255),
-    TextScaled = true
+local timer = label(
+    "",
+    UDim2.fromScale(0.25, 0.09),
+    UDim2.fromScale(0.375, 0.13),
+    hud,
+    Enum.Font.GothamBlack
+)
+
+local aliveLabel = label(
+    "SURVIVORS: 0",
+    UDim2.fromScale(0.25, 0.05),
+    UDim2.fromScale(0.02, 0.03),
+    hud
+)
+
+local message = label(
+    "",
+    UDim2.fromScale(0.8, 0.08),
+    UDim2.fromScale(0.1, 0.78),
+    hud,
+    Enum.Font.GothamBlack
+)
+
+local warning = create("Frame", {
+    Size = UDim2.fromScale(1, 0.17),
+    Position = UDim2.fromScale(0, -0.2),
+    BackgroundColor3 = Color3.fromRGB(180, 20, 20)
+}, hud)
+
+local warningTitle = label(
+    "DISASTER WARNING",
+    UDim2.fromScale(1, 0.55),
+    UDim2.fromScale(0, 0.05),
+    warning,
+    Enum.Font.GothamBlack
+)
+
+local warningText = label(
+    "FIND SHELTER!",
+    UDim2.fromScale(1, 0.3),
+    UDim2.fromScale(0, 0.62),
+    warning
+)
+
+local countdown = label(
+    "",
+    UDim2.fromScale(0.5, 0.25),
+    UDim2.fromScale(0.25, 0.36),
+    hud,
+    Enum.Font.GothamBlack
+)
+
+countdown.TextColor3 = Color3.fromRGB(255, 65, 35)
+
+-- SHOP MENU
+local shopFrame = create("Frame", {
+    Size = UDim2.fromScale(0.8, 0.65),
+    Position = UDim2.fromScale(0.1, 0.18),
+    BackgroundColor3 = Color3.fromRGB(20, 25, 38),
+    Visible = false
+}, background)
+
+create("UICorner", {
+    CornerRadius = UDim.new(0, 15)
 }, shopFrame)
 
-local close = create("TextButton", {
-    Size = UDim2.fromOffset(35, 35),
-    Position = UDim2.new(1, -43, 0, 8),
-    BackgroundColor3 = Color3.fromRGB(160, 40, 50),
-    Text = "X",
-    TextColor3 = Color3.new(1, 1, 1),
-    Font = Enum.Font.GothamBold,
-    TextScaled = true
-}, shopFrame)
+label(
+    "SURVIVAL SHOP",
+    UDim2.fromScale(1, 0.15),
+    UDim2.fromScale(0, 0.02),
+    shopFrame,
+    Enum.Font.GothamBlack
+)
 
-local message = create("TextLabel", {
-    Size = UDim2.new(1, -20, 0, 30),
-    Position = UDim2.new(0, 10, 1, -38),
-    BackgroundTransparency = 1,
-    Text = "Earn coins by surviving!",
-    TextColor3 = Color3.new(1, 1, 1),
-    TextScaled = true
-}, shopFrame)
+local shopMessage = label(
+    "",
+    UDim2.fromScale(1, 0.1),
+    UDim2.fromScale(0, 0.83),
+    shopFrame
+)
+
+local closeShop = button(
+    "CLOSE",
+    UDim2.fromScale(0.25, 0.1),
+    UDim2.fromScale(0.375, 0.7),
+    shopFrame
+)
 
 local items = {
-    {"Sprint", "Move faster", 150},
-    {"Medkit", "Emergency healing", 250},
-    {"Shield", "Protective equipment", 350}
+    {"Sprint", "250 COINS"},
+    {"Shield", "400 COINS"},
+    {"Medkit", "300 COINS"}
 }
 
-local buttons = {}
-
 for i, item in ipairs(items) do
+    local b = button(
+        item[1] .. " - " .. item[2],
+        UDim2.fromScale(0.75, 0.13),
+        UDim2.fromScale(0.125, 0.2 + (i - 1) * 0.16),
+        shopFrame
+    )
 
-    local card = create("Frame", {
-        Size = UDim2.new(1, -30, 0, 70),
-        Position = UDim2.fromOffset(15, 60 + (i - 1) * 80),
-        BackgroundColor3 = Color3.fromRGB(20, 35, 55)
-    }, shopFrame)
-
-    style(card)
-
-    create("TextLabel", {
-        Size = UDim2.new(0.55, 0, 0, 30),
-        Position = UDim2.fromOffset(10, 5),
-        BackgroundTransparency = 1,
-        Text = item[1],
-        TextColor3 = Color3.new(1, 1, 1),
-        Font = Enum.Font.GothamBold,
-        TextXAlignment = Enum.TextXAlignment.Left,
-        TextScaled = true
-    }, card)
-
-    create("TextLabel", {
-        Size = UDim2.new(0.55, 0, 0, 25),
-        Position = UDim2.fromOffset(10, 35),
-        BackgroundTransparency = 1,
-        Text = item[2],
-        TextColor3 = Color3.fromRGB(180, 195, 215),
-        TextScaled = true
-    }, card)
-
-    local button = create("TextButton", {
-        Size = UDim2.fromOffset(115, 42),
-        Position = UDim2.new(1, -125, 0.5, -21),
-        BackgroundColor3 = Color3.fromRGB(0, 135, 200),
-        Text = tostring(item[3]) .. " COINS",
-        TextColor3 = Color3.new(1, 1, 1),
-        Font = Enum.Font.GothamBold,
-        TextScaled = true
-    }, card)
-
-    buttons[item[1]] = button
-
-    button.MouseButton1Click:Connect(function()
-
-        local success, result = pcall(function()
+    b.MouseButton1Click:Connect(function()
+        local success, purchased, result = pcall(function()
             return shop:InvokeServer("Buy", item[1])
         end)
 
-        if not success then
-            message.Text = "Shop connection error!"
-            return
-        end
-
-        local purchased, response = result, nil
-
-        -- Server returns two values.
-        if type(result) == "boolean" then
-            purchased = result
-        end
-
-        if purchased then
-            button.Text = "OWNED"
-            message.Text = "Purchase successful!"
-            button.BackgroundColor3 = Color3.fromRGB(40, 140, 75)
+        if success then
+            shopMessage.Text = result or (purchased and "Purchased!" or "Purchase failed!")
         else
-            message.Text = tostring(response or "Purchase unsuccessful.")
+            shopMessage.Text = "SHOP ERROR"
         end
     end)
 end
 
-local function refreshShop()
+-- INTRO BUTTONS
+play.MouseButton1Click:Connect(function()
+    TweenService:Create(intro, TweenInfo.new(0.8), {
+        BackgroundTransparency = 1
+    }):Play()
 
-    local success, data = pcall(function()
-        return shop:InvokeServer("Get")
-    end)
-
-    if not success or not data then
-        message.Text = "Could not load shop."
-        return
-    end
-
-    message.Text = "YOUR COINS: " .. data.coins
-
-    for name, button in pairs(buttons) do
-        if data.owned[name] then
-            button.Text = "OWNED"
-            button.BackgroundColor3 = Color3.fromRGB(40, 140, 75)
-        else
-            button.Text = tostring(data.items[name].price) .. " COINS"
-        end
-    end
-end
-
-shopButton.MouseButton1Click:Connect(function()
-    shopFrame.Visible = not shopFrame.Visible
-
-    if shopFrame.Visible then
-        refreshShop()
-    end
+    task.wait(0.8)
+    intro.Visible = false
+    hud.Visible = true
+    background.BackgroundTransparency = 1
 end)
 
-close.MouseButton1Click:Connect(function()
+shopButton.MouseButton1Click:Connect(function()
+    shopFrame.Visible = true
+end)
+
+closeShop.MouseButton1Click:Connect(function()
     shopFrame.Visible = false
 end)
 
--- RESULTS SCREEN
+howButton.MouseButton1Click:Connect(function()
+    message.Text = "SURVIVE DISASTERS. EARN COINS. BECOME A LEGEND."
+    task.wait(5)
+    message.Text = ""
+end)
 
-local results = create("Frame", {
-    Size = UDim2.fromOffset(400, 270),
-    Position = UDim2.new(0.5, -200, 0.5, -135),
-    BackgroundColor3 = Color3.fromRGB(8, 15, 30),
-    Visible = false
-}, gui)
+-- DISASTER WARNINGS
+local colors = {
+    ["Tornado"] = Color3.fromRGB(110, 35, 160),
+    ["Tsunami"] = Color3.fromRGB(0, 100, 220),
+    ["Meteor Shower"] = Color3.fromRGB(220, 65, 15),
+    ["Earthquake"] = Color3.fromRGB(140, 95, 45),
+    ["Volcanic Eruption"] = Color3.fromRGB(230, 45, 10),
+    ["Lightning Storm"] = Color3.fromRGB(90, 90, 220),
+    ["Blizzard"] = Color3.fromRGB(100, 180, 220),
+    ["Hurricane"] = Color3.fromRGB(35, 70, 150)
+}
 
-style(results)
+local function showWarning(disaster)
+    warningTitle.Text = "⚠ " .. string.upper(disaster) .. " ⚠"
+    warningText.Text = "FIND SHELTER! SURVIVE!"
 
-create("TextLabel", {
-    Size = UDim2.new(1, -20, 0, 50),
-    Position = UDim2.fromOffset(10, 10),
-    BackgroundTransparency = 1,
-    Text = "ROUND RESULTS",
-    TextColor3 = Color3.fromRGB(0, 220, 255),
-    Font = Enum.Font.GothamBlack,
-    TextScaled = true
-}, results)
+    warning.BackgroundColor3 =
+        colors[disaster] or Color3.fromRGB(180, 20, 20)
 
-local resultText = create("TextLabel", {
-    Size = UDim2.new(1, -30, 1, -80),
-    Position = UDim2.fromOffset(15, 65),
-    BackgroundTransparency = 1,
-    Text = "",
-    TextColor3 = Color3.new(1, 1, 1),
-    Font = Enum.Font.GothamBold,
-    TextScaled = true,
-    TextWrapped = true
-}, results)
+    TweenService:Create(warning, TweenInfo.new(0.5), {
+        Position = UDim2.fromScale(0, 0)
+    }):Play()
 
--- SERVER EVENTS
+    siren:Play()
 
-event.OnClientEvent:Connect(function(kind, data)
+    task.wait(4)
 
-    if kind == "HUD" then
+    TweenService:Create(warning, TweenInfo.new(0.5), {
+        Position = UDim2.fromScale(0, -0.2)
+    }):Play()
+end
 
-        title.Text = data.title or "CATACLYSM"
-        subtitle.Text = data.subtitle or ""
+-- SERVER MESSAGES
+event.OnClientEvent:Connect(function(action, data)
 
-        timer.Text = data.timer and
-            (tostring(data.timer) .. "s") or ""
+    if action == "MapLoaded" then
+        status.Text = "LOCATION: " .. tostring(data)
 
-        if data.danger then
-            title.TextColor3 = Color3.fromRGB(255, 70, 60)
-        else
-            title.TextColor3 = Color3.fromRGB(0, 220, 255)
+    elseif action == "Intermission" then
+        status.Text = "NEXT ROUND IN"
+        timer.Text = tostring(data)
+
+    elseif action == "DisasterWarning" then
+        task.spawn(showWarning, tostring(data))
+
+    elseif action == "Countdown" then
+        countdown.Text = tostring(data)
+
+        if tonumber(data) == 1 then
+            task.wait(0.8)
+            countdown.Text = "SURVIVE!"
         end
 
-        results.Visible = false
+    elseif action == "DisasterStarted" then
+        status.Text = "DISASTER: " .. tostring(data)
+        countdown.Text = ""
 
-    elseif kind == "RESULTS" then
+    elseif action == "RoundTimer" then
+        timer.Text = tostring(data) .. "s"
 
-        results.Visible = true
+    elseif action == "AliveCount" then
+        aliveLabel.Text = "SURVIVORS: " .. tostring(data)
 
-        if #data > 0 then
-            resultText.Text =
-                "SURVIVORS:\n\n" .. table.concat(data, "\n")
-        else
-            resultText.Text = "NOBODY SURVIVED!"
-        end
+    elseif action == "RoundEnded" then
+        siren:Stop()
+        countdown.Text = ""
+        status.Text = "ROUND COMPLETE!"
+        message.Text = "SURVIVORS: " .. tostring(data)
 
-        task.delay(8, function()
-            results.Visible = false
+    elseif action == "Message" then
+        message.Text = tostring(data)
+        task.delay(3, function()
+            message.Text = ""
         end)
     end
 end)
 
-print("CATACLYSM HUD LOADED!")
+print("CATACLYSM CLIENT STARTED")
