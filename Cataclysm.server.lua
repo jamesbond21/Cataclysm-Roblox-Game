@@ -537,7 +537,13 @@ local function startRound()
 
     local theme = maps[math.random(1, #maps)]
     local disaster = disasters[math.random(1, #disasters)]
+-- CATACLYSM DISASTER WARNING
+local warningEvent = game:GetService("ReplicatedStorage"):WaitForChild("CataclysmEvent")
 
+warningEvent:FireAllClients("DisasterWarning", disaster)
+
+-- Give players 6 seconds to find shelter
+task.wait(6)
     buildMap(theme)
 
     for _, player in ipairs(Players:GetPlayers()) do
